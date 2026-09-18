@@ -1,0 +1,16 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Local environment and Supabase state
+.env
+.env.local
+.env.*.local
+!.env.example
+.supabase/
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,345 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap');
+
+:root {
+  color: #102b40;
+  background: #f4f2ec;
+  font-family: 'DM Sans', Arial, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  color: inherit;
+  font: inherit;
+}
+
+.site-header {
+  align-items: center;
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1440px;
+  padding: 1.6rem clamp(1.5rem, 4vw, 5rem);
+}
+
+.wordmark {
+  align-items: center;
+  display: inline-flex;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.15rem;
+  gap: 0.65rem;
+  white-space: nowrap;
+}
+.mark {
+  align-items: center;
+  background: #b79748;
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  height: 1.7rem;
+  justify-content: center;
+  letter-spacing: -0.08em;
+  width: 1.7rem;
+}
+nav {
+  display: flex;
+  gap: clamp(1rem, 2vw, 2.5rem);
+}
+nav a,
+.text-button {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 0.77rem;
+  letter-spacing: 0.04em;
+}
+nav a:hover,
+.text-button:hover,
+.text-link:hover {
+  color: #b79748;
+}
+.text-button {
+  border-bottom: 1px solid #b79748;
+  padding: 0.35rem 0;
+}
+
+.hero {
+  min-height: min(720px, calc(100svh - 76px));
+  overflow: hidden;
+  padding: clamp(5rem, 11vw, 10rem) clamp(1.5rem, 11vw, 12rem) 6rem;
+  position: relative;
+}
+.eyebrow {
+  color: #9a7a32;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.13em;
+  margin: 0 0 1.4rem;
+  text-transform: uppercase;
+}
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(3.8rem, 8.1vw, 8rem);
+  font-weight: 500;
+  letter-spacing: -0.075em;
+  line-height: 0.94;
+  margin-bottom: 2.2rem;
+  max-width: 900px;
+  position: relative;
+  z-index: 1;
+}
+h1 em {
+  color: #b79748;
+  font-weight: inherit;
+}
+.hero-copy {
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  line-height: 1.6;
+  max-width: 430px;
+  position: relative;
+  z-index: 1;
+}
+.button {
+  align-items: center;
+  border: 1px solid transparent;
+  display: inline-flex;
+  font-size: 0.8rem;
+  gap: 2.6rem;
+  letter-spacing: 0.03em;
+  margin-top: 1.1rem;
+  padding: 0.95rem 1.2rem;
+  position: relative;
+  text-transform: uppercase;
+  z-index: 1;
+}
+.button-primary {
+  background: #102b40;
+  color: #fff;
+}
+.button-primary:hover {
+  background: #b79748;
+}
+.hero-orbit {
+  height: min(51vw, 660px);
+  position: absolute;
+  right: clamp(-210px, -8vw, -60px);
+  top: 3.8rem;
+  width: min(51vw, 660px);
+}
+.orbit-core {
+  background: radial-gradient(circle at 38% 30%, #244762, #102b40 64%);
+  border-radius: 50%;
+  height: 62%;
+  left: 19%;
+  position: absolute;
+  top: 19%;
+  width: 62%;
+}
+.orbit-line {
+  border: clamp(8px, 1vw, 14px) solid #f4f2ec;
+  border-radius: 50%;
+  height: 63%;
+  left: 18%;
+  position: absolute;
+  top: 19%;
+  transform: rotate(-24deg);
+  width: 70%;
+}
+.orbit-line-two {
+  transform: rotate(-42deg) scale(0.98, 0.74);
+}
+.orbit-star {
+  background: #b79748;
+  border-radius: 50%;
+  height: clamp(25px, 4vw, 55px);
+  position: absolute;
+  right: 8%;
+  top: 5%;
+  width: clamp(25px, 4vw, 55px);
+}
+
+.principle {
+  background: #102b40;
+  color: #f4f2ec;
+  padding: clamp(5rem, 10vw, 9rem) clamp(1.5rem, 11vw, 12rem);
+}
+.principle-statement {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.25rem, 4.6vw, 4.4rem);
+  letter-spacing: -0.055em;
+  line-height: 1.05;
+  margin-bottom: clamp(4rem, 8vw, 7rem);
+  max-width: 920px;
+}
+.principle-grid {
+  border-top: 1px solid #6e8290;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.principle-grid article {
+  border-right: 1px solid #6e8290;
+  padding: 1.3rem 2.5rem 0 0;
+}
+.principle-grid article + article {
+  padding-left: 2.5rem;
+}
+.principle-grid article:last-child {
+  border-right: 0;
+}
+.principle-grid span {
+  color: #b79748;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+}
+.principle-grid h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.8rem;
+  font-weight: 500;
+  margin: 2.5rem 0 0.6rem;
+}
+.principle-grid p {
+  color: #c8d0d3;
+  line-height: 1.6;
+  max-width: 260px;
+}
+
+.launch-card {
+  margin: clamp(4rem, 9vw, 9rem) auto;
+  max-width: 920px;
+  padding: 0 clamp(1.5rem, 4vw, 3rem);
+  text-align: center;
+}
+.launch-card h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.8rem, 5vw, 5rem);
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+  margin-bottom: 1.2rem;
+}
+.launch-card > p:not(.eyebrow) {
+  line-height: 1.7;
+  margin: 0 auto 1.8rem;
+  max-width: 480px;
+}
+.text-link {
+  border-bottom: 1px solid #b79748;
+  display: inline-block;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.4rem;
+  text-transform: uppercase;
+}
+footer {
+  border-top: 1px solid #d7d1c5;
+  display: flex;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  justify-content: space-between;
+  margin: 0 clamp(1.5rem, 4vw, 5rem);
+  padding: 1.5rem 0 2.3rem;
+}
+
+.modal-backdrop {
+  align-items: center;
+  background: rgba(16, 43, 64, 0.72);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1.5rem;
+  position: fixed;
+  z-index: 10;
+}
+.studio-preview {
+  background: #f4f2ec;
+  max-width: 560px;
+  padding: 3rem;
+  position: relative;
+}
+.studio-preview h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.5rem;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 1.05;
+}
+.studio-preview p:not(.eyebrow) {
+  line-height: 1.6;
+}
+.close-button {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 2rem;
+  line-height: 1;
+  position: absolute;
+  right: 1rem;
+  top: 0.8rem;
+}
+
+@media (max-width: 760px) {
+  nav {
+    display: none;
+  }
+  .site-header {
+    gap: 1rem;
+  }
+  .wordmark {
+    font-size: 1rem;
+  }
+  .hero {
+    min-height: 680px;
+    padding-top: 5rem;
+  }
+  .hero-orbit {
+    opacity: 0.32;
+    right: -17%;
+    top: 28%;
+    width: 93vw;
+    height: 93vw;
+  }
+  .principle-grid {
+    grid-template-columns: 1fr;
+  }
+  .principle-grid article,
+  .principle-grid article + article {
+    border-bottom: 1px solid #6e8290;
+    border-right: 0;
+    padding: 1.5rem 0;
+  }
+  .principle-grid article:last-child {
+    border-bottom: 0;
+  }
+  .principle-grid h2 {
+    margin: 1rem 0 0.3rem;
+  }
+  footer {
+    gap: 1rem;
+  }
+}
