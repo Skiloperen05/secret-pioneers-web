@@ -1,6 +1,6 @@
 # Utviklingsplan: Secret Pioneers
 
-**Status:** Besluttet arkitektur og produktplan før oppstart
+**Status:** Fase 0 er etablert og i sluttkontroll 21. september 2026.
 
 **Mål:** Et profesjonelt digitalt hjem for Secret Pioneers med en åpen,
 offentlig profil og et sikkert, medlemsstyrt arbeidsrom. Innhold som publiseres
@@ -321,8 +321,9 @@ kommer før et omfattende samarbeidsverktøy.
 1. Opprette et nytt GitHub-repositorium for `secret-pioneers-web`.
 2. Initialisere React/TypeScript/Vite, linting, formattering, tester og
    pre-commit-kontroller.
-3. Opprette Supabase-prosjekt i valgt EU-region, knytte lokal CLI og etablere
-   miljøvariabelmal uten hemmeligheter.
+3. Koble nettstedet til det eksisterende EU-baserte Supabase-prosjektet med et
+   eget, `sp_`-prefikset datadomene, RLS og privat fillagring. Et separat
+   utviklingsmiljø vurderes når prosjektet trenger staging/branching.
 4. Konfigurere GitHub Actions for kvalitetssjekker og forhåndsvisning av PR-er.
 5. Konfigurere GitHub Pages-produksjonsdeploy og verifisere
    `secretpioneers.no` før DNS-omlegging.
@@ -330,8 +331,12 @@ kommer før et omfattende samarbeidsverktøy.
 7. Avklare e-postavsender (custom SMTP), hvilken innloggingsmetode gruppen
    velger og hvem som er første owner.
 
-**Ferdig når:** Tom, HTTPS-sikret testside deployes automatisk fra `main`, og
-lokal utvikling kan koble seg til et separat utviklingsmiljø.
+**Etablert 21. september 2026:** GitHub-repositorium, React/TypeScript/Vite,
+kvalitetssjekker, GitHub Pages-deploy, designsystem, offentlig startsidemal og
+Supabase-fundament er på plass. Produksjon bruker offentlige GitHub-variabler,
+RLS-beskyttede `sp_`-tabeller, privat `sp-media`-lagring og tillatte
+innloggingsreturer for `secretpioneers.no`. HTTPS blir håndhevet i GitHub Pages
+så snart sertifikatet er utstedt etter DNS-validering.
 
 ### Fase 1 – Offentlig side og sikker publisering (MVP)
 

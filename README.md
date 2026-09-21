@@ -12,9 +12,11 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-`VITE_SUPABASE_URL` og `VITE_SUPABASE_PUBLISHABLE_KEY` fylles inn etter at
-Supabase-prosjektet er opprettet. Ikke legg inn `service_role`, databasepassord
-eller andre hemmeligheter i `.env.local` som sendes til Git.
+`VITE_SUPABASE_URL` og `VITE_SUPABASE_PUBLISHABLE_KEY` er koblet til det
+delte Secret Pioneers-prosjektet i Supabase. Produksjonsbygget får de samme
+offentlige klientverdiene fra GitHub Actions-variabler; de er ikke
+hemmeligheter. Ikke legg inn `service_role`, databasepassord eller andre
+hemmeligheter i `.env.local` eller GitHub Actions-variabler.
 
 ## Kvalitet
 

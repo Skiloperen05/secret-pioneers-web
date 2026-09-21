@@ -1,12 +1,14 @@
 import { useState } from 'react'
 
+import { isSupabaseConfigured } from './lib/supabase'
+
 const publicNavigation = ['Prosjekter', 'Tjenester', 'Innsikt', 'Om oss']
 
 function App() {
   const [studioOpen, setStudioOpen] = useState(false)
 
   return (
-    <main>
+    <main data-supabase={isSupabaseConfigured ? 'configured' : 'not-configured'}>
       <header className="site-header" aria-label="Hovednavigasjon">
         <a className="wordmark" href="#top" aria-label="Secret Pioneers – hjem">
           <span className="mark" aria-hidden="true">
