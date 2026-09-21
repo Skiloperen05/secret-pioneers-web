@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // GitHub Pages SPA redirect: rewrites the path into a query parameter
+      // so index.html can restore it. This lets React Router handle all routes.
+      var segments = window.location.pathname.split('/').filter(Boolean)
+      var basePath = '/'
+      var repo = segments.length > 0 ? segments[0] : ''
+      var path = '/' + segments.join('/')
+      window.location.replace(
+        window.location.origin + basePath + '?p=' + encodeURIComponent(path)
+      )
+    </script>
+    <title>Videresender …</title>
+  </head>
+  <body></body>
+</html>

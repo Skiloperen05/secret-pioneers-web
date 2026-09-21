@@ -10,12 +10,22 @@
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' data:; connect-src 'self' https://qnwjhheoekpqqqhevztw.supabase.co wss://qnwjhheoekpqqqhevztw.supabase.co; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; upgrade-insecure-requests"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' data:; connect-src 'self' https://qnwjhheoekpqqqhevztw.supabase.co wss://qnwjhheoekpqqqhevztw.supabase.co; script-src 'self' 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; upgrade-insecure-requests"
     />
     <title>Secret Pioneers</title>
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // GitHub Pages SPA support: restore path from 404.html redirect
+      (function () {
+        var q = window.location.search
+        var p = new URLSearchParams(q).get('p')
+        if (p) {
+          window.history.replaceState(null, '', p)
+        }
+      })()
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
