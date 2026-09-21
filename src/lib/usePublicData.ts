@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import type { Article, Project, ServiceOffering, SiteSettings } from './types'
 
+let channelId = 0
+
 export function usePublicSettings() {
   const [settings, setSettings] = useState<SiteSettings | null>(null)
 
@@ -22,8 +24,9 @@ export function usePublicSettings() {
     const client = supabase
     if (!client) return
     load()
+    const name = `sp-public-settings-${++channelId}`
     const channel = client
-      .channel('sp-public-settings')
+      .channel(name)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'sp_site_settings' },
@@ -57,8 +60,9 @@ export function usePublicProjects() {
     const client = supabase
     if (!client) return
     load()
+    const name = `sp-public-projects-${++channelId}`
     const channel = client
-      .channel('sp-public-projects')
+      .channel(name)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'sp_projects' },
@@ -94,8 +98,9 @@ export function usePublicArticles() {
     const client = supabase
     if (!client) return
     load()
+    const name = `sp-public-articles-${++channelId}`
     const channel = client
-      .channel('sp-public-articles')
+      .channel(name)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'sp_articles' },
@@ -129,8 +134,9 @@ export function usePublicServices() {
     const client = supabase
     if (!client) return
     load()
+    const name = `sp-public-services-${++channelId}`
     const channel = client
-      .channel('sp-public-services')
+      .channel(name)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'sp_service_offerings' },
