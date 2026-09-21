@@ -18,8 +18,10 @@ const studioNav = [
 ]
 
 function LoginForm() {
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
 
@@ -33,44 +35,127 @@ function LoginForm() {
     setLoading(false)
     setNotice(
       error
-        ? {
-            tone: 'error',
-            text: 'E-post eller passord stemmer ikke.',
-          }
+        ? { tone: 'error', text: 'E-post eller passord stemmer ikke.' }
         : { tone: 'success', text: 'Du er logget inn.' },
     )
+  }
+
+  const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!supabase) return
+    if (password.length < 8) {
+      setNotice({ tone: 'error', text: 'Passordet må være minst 8 tegn.' })
+      return
+    }
+    if (password !== confirmPassword) {
+      setNotice({ tone: 'error', text: 'Passordene er ikke like.' })
+      return
+    }
+    setLoading(true)
+    setNotice(null)
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin + '/studio' },
+    })
+    setPassword('')
+    setConfirmPassword('')
+    setLoading(false)
+    if (error) {
+      setNotice({
+        tone: 'error',
+        text: 'Kontoen kunne ikke opprettes. Sjekk at du er invitert.',
+      })
+      return
+    }
+    setNotice({
+      tone: 'success',
+      text: 'Konto opprettet! Du kan nå logge inn.',
+    })
+    setMode('login')
   }
 
   return (
     <div className="studio-login">
       <div className="studio-login-card">
         <p className="eyebrow">Secret Pioneers Studio</p>
-        <h1>Medlemsinnlogging</h1>
-        <p>Logg inn med e-post og passord.</p>
-        <form className="auth-form" onSubmit={handlePasswordLogin}>
-          <label htmlFor="member-email">E-post</label>
-          <input
-            autoComplete="email"
-            id="member-email"
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="navn@eksempel.no"
-            required
-            type="email"
-            value={email}
-          />
-          <label htmlFor="member-password">Passord</label>
-          <input
-            autoComplete="current-password"
-            id="member-password"
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            type="password"
-            value={password}
-          />
-          <button className="button button-primary" disabled={loading}>
-            {loading ? 'Logger inn …' : 'Logg inn'}
-          </button>
-        </form>
+        <h1>{mode === 'login' ? 'Logg inn' : 'Opprett konto'}</h1>
+        <p>
+          {mode === 'login'
+            ? 'Logg inn med e-post og passord.'
+            : 'Har du fått en invitasjon? Opprett kontoen din her.'}
+        </p>
+        {mode === 'login' ? (
+          <form className="auth-form" onSubmit={handlePasswordLogin}>
+            <label htmlFor="member-email">E-post</label>
+            <input
+              autoComplete="email"
+              id="member-email"
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="navn@eksempel.no"
+              required
+              type="email"
+              value={email}
+            />
+            <label htmlFor="member-password">Passord</label>
+            <input
+              autoComplete="current-password"
+              id="member-password"
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              type="password"
+              value={password}
+            />
+            <button className="button button-primary" disabled={loading}>
+              {loading ? 'Logger inn …' : 'Logg inn'}
+            </button>
+          </form>
+        ) : (
+          <form className="auth-form" onSubmit={handleRegister}>
+            <label htmlFor="reg-email">E-post (samme som invitasjonen)</label>
+            <input
+              autoComplete="email"
+              id="reg-email"
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="navn@eksempel.no"
+              required
+              type="email"
+              value={email}
+            />
+            <label htmlFor="reg-password">Velg passord</label>
+            <input
+              autoComplete="new-password"
+              id="reg-password"
+              minLength={8}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              type="password"
+              value={password}
+            />
+            <label htmlFor="reg-confirm">Gjenta passord</label>
+            <input
+              autoComplete="new-password"
+              id="reg-confirm"
+              minLength={8}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              type="password"
+              value={confirmPassword}
+            />
+            <button className="button button-primary" disabled={loading}>
+              {loading ? 'Oppretter …' : 'Opprett konto'}
+            </button>
+          </form>
+        )}
+        <button
+          className="quiet-button"
+          onClick={() => {
+            setMode(mode === 'login' ? 'register' : 'login')
+            setNotice(null)
+          }}
+        >
+          {mode === 'login' ? 'Ny bruker? Opprett konto' : 'Har du konto? Logg inn'}
+        </button>
         {notice && (
           <p className={`auth-message ${notice.tone}`} role="status">
             {notice.text}
