@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 
 import { supabase } from '../../lib/supabase'
 import { createSlug, useSession } from '../../lib/hooks'
-import type { Notice, StudioProject } from '../../lib/types'
+import type { Notice, Profile, ProjectMember, StudioProject } from '../../lib/types'
 
 export default function StudioProjectsPage() {
   const { userId } = useSession()
@@ -18,19 +18,39 @@ export default function StudioProjectsPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [uploadingFor, setUploadingFor] = useState<string | null>(null)
 
+  const [allProfiles, setAllProfiles] = useState<Profile[]>([])
+  const [projectMembers, setProjectMembers] = useState<Map<string, ProjectMember[]>>(
+    new Map(),
+  )
+  const [addMemberProject, setAddMemberProject] = useState<string | null>(null)
+  const [addMemberProfile, setAddMemberProfile] = useState('')
+  const [addMemberRole, setAddMemberRole] = useState('member')
+
   const loadProjects = useCallback(() => {
     const client = supabase
     if (!client) return
-    void client
-      .from('sp_projects')
-      .select(
-        'id, title, slug, summary, status, visibility, is_public, published_at, cover_image_path',
-      )
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setProjects((data as StudioProject[]) ?? [])
-        setLoading(false)
-      })
+    void Promise.all([
+      client
+        .from('sp_projects')
+        .select(
+          'id, title, slug, summary, status, visibility, is_public, published_at, cover_image_path',
+        )
+        .order('created_at', { ascending: false }),
+      client.from('sp_profiles').select('id, display_name, avatar_path, bio'),
+      client.from('sp_project_members').select('id, project_id, profile_id, role'),
+    ]).then(([projRes, profRes, pmRes]) => {
+      setProjects((projRes.data as StudioProject[]) ?? [])
+      setAllProfiles(profRes.data ?? [])
+      const pmMap = new Map<string, ProjectMember[]>()
+      const profMap = new Map((profRes.data ?? []).map((p) => [p.id, p]))
+      for (const pm of pmRes.data ?? []) {
+        const list = pmMap.get(pm.project_id) ?? []
+        list.push({ ...pm, profile: profMap.get(pm.profile_id) })
+        pmMap.set(pm.project_id, list)
+      }
+      setProjectMembers(pmMap)
+      setLoading(false)
+    })
   }, [])
 
   useEffect(() => {
@@ -132,6 +152,30 @@ export default function StudioProjectsPage() {
     void loadProjects()
   }
 
+  const handleAddMember = async (projectId: string) => {
+    if (!supabase || !addMemberProfile) return
+    const { error } = await supabase.from('sp_project_members').insert({
+      project_id: projectId,
+      profile_id: addMemberProfile,
+      role: addMemberRole,
+    })
+    if (error) {
+      setNotice({ tone: 'error', text: 'Medlemmet kunne ikke legges til.' })
+      return
+    }
+    setAddMemberProject(null)
+    setAddMemberProfile('')
+    setAddMemberRole('member')
+    setNotice({ tone: 'success', text: 'Prosjektmedlem lagt til.' })
+    void loadProjects()
+  }
+
+  const removeMember = async (pmId: string) => {
+    if (!supabase) return
+    await supabase.from('sp_project_members').delete().eq('id', pmId)
+    void loadProjects()
+  }
+
   return (
     <div className="studio-page">
       <div className="studio-page-header">
@@ -208,6 +252,16 @@ export default function StudioProjectsPage() {
                   >
                     {project.is_public ? 'Avpubliser' : 'Publiser'}
                   </button>
+                  <button
+                    className="quiet-button"
+                    onClick={() =>
+                      setAddMemberProject(
+                        addMemberProject === project.id ? null : project.id,
+                      )
+                    }
+                  >
+                    Medlemmer ({projectMembers.get(project.id)?.length ?? 0})
+                  </button>
                   <div className="image-upload-row">
                     <input
                       type="file"
@@ -223,6 +277,57 @@ export default function StudioProjectsPage() {
                     </button>
                   </div>
                 </div>
+                {addMemberProject === project.id && (
+                  <div className="project-members-section">
+                    {(projectMembers.get(project.id) ?? []).map((pm) => (
+                      <div key={pm.id} className="project-member-row">
+                        <span>{pm.profile?.display_name ?? 'Ukjent'}</span>
+                        <span className="overview-meta">{pm.role}</span>
+                        <button
+                          className="quiet-button"
+                          onClick={() => void removeMember(pm.id)}
+                        >
+                          Fjern
+                        </button>
+                      </div>
+                    ))}
+                    <div className="form-row" style={{ marginTop: '0.5rem' }}>
+                      <select
+                        value={addMemberProfile}
+                        onChange={(e) => setAddMemberProfile(e.target.value)}
+                      >
+                        <option value="">Velg medlem …</option>
+                        {allProfiles
+                          .filter(
+                            (p) =>
+                              !(projectMembers.get(project.id) ?? []).some(
+                                (pm) => pm.profile_id === p.id,
+                              ),
+                          )
+                          .map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.display_name}
+                            </option>
+                          ))}
+                      </select>
+                      <select
+                        value={addMemberRole}
+                        onChange={(e) => setAddMemberRole(e.target.value)}
+                      >
+                        <option value="lead">Leder</option>
+                        <option value="member">Medlem</option>
+                        <option value="observer">Observatør</option>
+                      </select>
+                      <button
+                        className="quiet-button"
+                        disabled={!addMemberProfile}
+                        onClick={() => void handleAddMember(project.id)}
+                      >
+                        Legg til
+                      </button>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
