@@ -2,15 +2,18 @@ import { type FormEvent, useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
 
 import { isSupabaseConfigured, supabase } from '../../lib/supabase'
-import { canEdit, useMembership, useSession } from '../../lib/hooks'
+import { useMembership, useSession } from '../../lib/hooks'
 import type { Notice } from '../../lib/types'
 
 const studioNav = [
   { label: 'Oversikt', to: '/studio' },
   { label: 'Publisering', to: '/studio/publisering' },
   { label: 'Prosjekter', to: '/studio/prosjekter' },
+  { label: 'Oppgaver', to: '/studio/oppgaver' },
+  { label: 'Møter', to: '/studio/moter' },
   { label: 'Artikler', to: '/studio/artikler' },
   { label: 'Tjenester', to: '/studio/tjenester' },
+  { label: 'Medlemmer', to: '/studio/medlemmer' },
   { label: 'Innstillinger', to: '/studio/innstillinger' },
 ]
 
@@ -149,15 +152,15 @@ export default function StudioLayout() {
     return <LoginForm />
   }
 
-  if (!canEdit(membership)) {
+  if (membership.status !== 'active') {
     return (
       <div className="studio-login">
         <div className="studio-login-card">
           <p className="eyebrow">Secret Pioneers Studio</p>
           <h1>Velkommen, {email}.</h1>
           <p>
-            Medlemskapet ditt er aktivt med rollen <strong>{membership.role}</strong>,
-            men denne rollen har foreløpig ikke redaktørtilgang.
+            Medlemskapet ditt har status <strong>{membership.status}</strong> og gir
+            foreløpig ikke tilgang til arbeidsrommet.
           </p>
           <button
             className="quiet-button"
@@ -171,7 +174,7 @@ export default function StudioLayout() {
   }
 
   if (pathname === '/studio/' || pathname === '/studio') {
-    return <Navigate to="/studio/publisering" replace />
+    return <Navigate to="/studio/oversikt" replace />
   }
 
   return (
