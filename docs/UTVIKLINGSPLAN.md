@@ -1,6 +1,6 @@
 # Utviklingsplan: Secret Pioneers
 
-**Status:** Fase 0 gjennomført 21. september 2026. Fase 1 er neste steg.
+**Status:** Fase 0 gjennomført 21. september 2026. Fase 1 er i gang.
 
 **Mål:** Et profesjonelt digitalt hjem for Secret Pioneers med en åpen,
 offentlig profil og et sikkert, medlemsstyrt arbeidsrom. Innhold som publiseres

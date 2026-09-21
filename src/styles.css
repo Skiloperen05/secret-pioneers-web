@@ -235,6 +235,66 @@ h1 em {
   padding: 0 clamp(1.5rem, 4vw, 3rem);
   text-align: center;
 }
+.projects-section {
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: clamp(5rem, 10vw, 9rem) clamp(1.5rem, 4vw, 3rem) 0;
+}
+.section-heading {
+  align-items: end;
+  border-bottom: 1px solid #d7d1c5;
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  padding-bottom: 1.6rem;
+}
+.section-heading h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.4rem, 5vw, 4.3rem);
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+  margin: 0;
+}
+.project-grid {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 1px;
+}
+.project-card {
+  background: #e9e5db;
+  min-height: 230px;
+  padding: 1.8rem;
+}
+.project-card span {
+  color: #9a7a32;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.project-card h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  margin: 2.8rem 0 0.7rem;
+}
+.project-card p,
+.empty-projects,
+.content-note {
+  line-height: 1.6;
+}
+.empty-projects {
+  color: #5d6c76;
+  margin: 1.6rem 0 0;
+  max-width: 480px;
+}
+.content-note {
+  color: #9a7a32;
+  font-size: 0.85rem;
+}
 .launch-card h2 {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: clamp(2.8rem, 5vw, 5rem);
@@ -292,6 +352,46 @@ footer {
 .studio-preview p:not(.eyebrow) {
   line-height: 1.6;
 }
+.auth-form {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.7rem;
+}
+.auth-form label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.auth-form input {
+  background: #fffdf8;
+  border: 1px solid #b9b1a0;
+  border-radius: 0;
+  font: inherit;
+  padding: 0.85rem 0.9rem;
+}
+.auth-form input:focus {
+  border-color: #102b40;
+  outline: 2px solid #b79748;
+  outline-offset: 2px;
+}
+.auth-form .button {
+  cursor: pointer;
+  justify-content: space-between;
+  margin-right: auto;
+}
+.auth-form .button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.auth-message {
+  color: #9b3b35;
+  font-size: 0.9rem;
+  margin: 1.2rem 0 0;
+}
+.auth-message.success {
+  color: #39674a;
+}
 .close-button {
   background: transparent;
   border: 0;
@@ -338,6 +438,11 @@ footer {
   }
   .principle-grid h2 {
     margin: 1rem 0 0.3rem;
+  }
+  .section-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 0.6rem;
   }
   footer {
     gap: 1rem;
