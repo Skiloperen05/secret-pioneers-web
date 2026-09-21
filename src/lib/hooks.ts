@@ -52,8 +52,10 @@ export function useSession() {
 }
 
 export function useMembership(userId: string | null) {
-  const [membership, setMembership] = useState<Membership | null>(null)
-  const [loading, setLoading] = useState(!!supabase)
+  const [state, setState] = useState<{
+    membership: Membership | null
+    forUser: string | null
+  }>({ membership: null, forUser: null })
 
   useEffect(() => {
     const client = supabase
@@ -66,13 +68,13 @@ export function useMembership(userId: string | null) {
       .maybeSingle()
       .then(({ data, error }) => {
         if (!active) return
-        setMembership(error ? null : data)
-        setLoading(false)
+        setState({ membership: error ? null : data, forUser: userId })
       })
     return () => {
       active = false
     }
   }, [userId])
 
-  return { membership, loading }
+  const loading = !!supabase && !!userId && state.forUser !== userId
+  return { membership: state.forUser === userId ? state.membership : null, loading }
 }

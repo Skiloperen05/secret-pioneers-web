@@ -35,34 +35,9 @@ function LoginForm() {
       error
         ? {
             tone: 'error',
-            text: 'E-post eller passord stemmer ikke. Bruk innloggingslenke første gang.',
+            text: 'E-post eller passord stemmer ikke.',
           }
         : { tone: 'success', text: 'Du er logget inn.' },
-    )
-  }
-
-  const handleMagicLink = async () => {
-    if (!supabase || !email) return
-    setLoading(true)
-    setNotice(null)
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin + '/studio',
-        shouldCreateUser: false,
-      },
-    })
-    setLoading(false)
-    setNotice(
-      error
-        ? {
-            tone: 'error',
-            text: 'Vi kunne ikke sende lenken. Kontroller e-postadressen eller prøv igjen.',
-          }
-        : {
-            tone: 'success',
-            text: 'Hvis adressen er invitert, ligger en innloggingslenke i innboksen.',
-          },
     )
   }
 
@@ -71,10 +46,7 @@ function LoginForm() {
       <div className="studio-login-card">
         <p className="eyebrow">Secret Pioneers Studio</p>
         <h1>Medlemsinnlogging</h1>
-        <p>
-          Logg inn med e-post og passord. Første gang kan du bruke en innloggingslenke,
-          og deretter opprette et eget passord i Studio.
-        </p>
+        <p>Logg inn med e-post og passord.</p>
         <form className="auth-form" onSubmit={handlePasswordLogin}>
           <label htmlFor="member-email">E-post</label>
           <input
@@ -99,13 +71,6 @@ function LoginForm() {
             {loading ? 'Logger inn …' : 'Logg inn'}
           </button>
         </form>
-        <button
-          className="quiet-button magic-link-button"
-          disabled={loading || !email}
-          onClick={() => void handleMagicLink()}
-        >
-          Bruk innloggingslenke i stedet
-        </button>
         {notice && (
           <p className={`auth-message ${notice.tone}`} role="status">
             {notice.text}
