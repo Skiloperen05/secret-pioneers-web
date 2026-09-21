@@ -1,6 +1,6 @@
 # Utviklingsplan: Secret Pioneers
 
-**Status:** Fase 0 er etablert og i sluttkontroll 21. september 2026.
+**Status:** Fase 0 gjennomført 21. september 2026. Fase 1 er neste steg.
 
 **Mål:** Et profesjonelt digitalt hjem for Secret Pioneers med en åpen,
 offentlig profil og et sikkert, medlemsstyrt arbeidsrom. Innhold som publiseres
@@ -335,8 +335,9 @@ kommer før et omfattende samarbeidsverktøy.
 kvalitetssjekker, GitHub Pages-deploy, designsystem, offentlig startsidemal og
 Supabase-fundament er på plass. Produksjon bruker offentlige GitHub-variabler,
 RLS-beskyttede `sp_`-tabeller, privat `sp-media`-lagring og tillatte
-innloggingsreturer for `secretpioneers.no`. HTTPS blir håndhevet i GitHub Pages
-så snart sertifikatet er utstedt etter DNS-validering.
+innloggingsreturer for `secretpioneers.no`. GitHub Pages har et gyldig
+Let's Encrypt-sertifikat, håndhever HTTPS og videresender `www` sikkert til
+hoveddomenet.
 
 ### Fase 1 – Offentlig side og sikker publisering (MVP)
 
