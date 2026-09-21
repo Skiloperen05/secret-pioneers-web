@@ -769,7 +769,9 @@ footer {
   text-transform: uppercase;
 }
 .studio-form input,
-.studio-form textarea {
+.studio-form textarea,
+.studio-form select,
+.studio-project-actions select {
   background: var(--input-bg);
   border: 1px solid var(--input-border);
   border-radius: 0;
@@ -781,7 +783,9 @@ footer {
   resize: vertical;
 }
 .studio-form input:focus,
-.studio-form textarea:focus {
+.studio-form textarea:focus,
+.studio-form select:focus,
+.studio-project-actions select:focus {
   border-color: var(--ink);
   outline: 2px solid var(--gold);
   outline-offset: 2px;

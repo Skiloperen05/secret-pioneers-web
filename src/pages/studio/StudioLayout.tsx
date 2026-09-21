@@ -20,6 +20,7 @@ const studioNav = [
 function LoginForm() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -56,10 +57,14 @@ function LoginForm() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.origin + '/studio' },
+      options: {
+        emailRedirectTo: window.location.origin + '/studio',
+        data: { display_name: displayName.trim() },
+      },
     })
     setPassword('')
     setConfirmPassword('')
+    setDisplayName('')
     setLoading(false)
     if (error) {
       setNotice({
@@ -112,6 +117,16 @@ function LoginForm() {
           </form>
         ) : (
           <form className="auth-form" onSubmit={handleRegister}>
+            <label htmlFor="reg-name">Navn</label>
+            <input
+              autoComplete="name"
+              id="reg-name"
+              maxLength={120}
+              minLength={2}
+              onChange={(e) => setDisplayName(e.target.value)}
+              required
+              value={displayName}
+            />
             <label htmlFor="reg-email">E-post (samme som invitasjonen)</label>
             <input
               autoComplete="email"

@@ -85,6 +85,17 @@ export type ProjectMember = {
   profile?: Profile
 }
 
+export type ProjectDocument = {
+  id: string
+  project_id: string
+  storage_path: string
+  file_name: string
+  mime_type: string
+  size_bytes: number
+  uploaded_by: string
+  created_at: string
+}
+
 export type Task = {
   id: string
   project_id: string | null

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 
 import { supabase } from '../../lib/supabase'
-import { useSession } from '../../lib/hooks'
+import { useMembership, useSession } from '../../lib/hooks'
 import type { Invitation, MembershipRow, Notice } from '../../lib/types'
 
 export default function MembersPage() {
   const { userId } = useSession()
+  const { membership } = useMembership(userId)
   const [members, setMembers] = useState<MembershipRow[]>([])
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
@@ -14,6 +15,7 @@ export default function MembersPage() {
   const [invEmail, setInvEmail] = useState('')
   const [invRole, setInvRole] = useState('member')
   const [sending, setSending] = useState(false)
+  const canManageMembers = membership?.role === 'owner' || membership?.role === 'admin'
 
   const loadData = useCallback(() => {
     const client = supabase
@@ -87,6 +89,23 @@ export default function MembersPage() {
     void loadData()
   }
 
+  const updateMembership = async (
+    membershipId: string,
+    changes: { role?: string; status?: string },
+  ) => {
+    if (!supabase || !canManageMembers) return
+    const { error } = await supabase
+      .from('sp_memberships')
+      .update(changes)
+      .eq('id', membershipId)
+    if (error) {
+      setNotice({ tone: 'error', text: 'Medlemskapet kunne ikke oppdateres.' })
+      return
+    }
+    setNotice({ tone: 'success', text: 'Medlemskapet er oppdatert.' })
+    void loadData()
+  }
+
   const roleLabels: Record<string, string> = {
     owner: 'Eier',
     admin: 'Administrator',
@@ -113,36 +132,42 @@ export default function MembersPage() {
         <h1>Medlemmer</h1>
       </div>
 
-      <section className="studio-card">
-        <h2>Inviter nytt medlem</h2>
-        <form className="studio-form" onSubmit={handleInvite}>
-          <label htmlFor="inv-email">E-post</label>
-          <input
-            id="inv-email"
-            type="email"
-            required
-            placeholder="navn@eksempel.no"
-            value={invEmail}
-            onChange={(e) => setInvEmail(e.target.value)}
-          />
-          <label htmlFor="inv-role">Rolle</label>
-          <select
-            id="inv-role"
-            value={invRole}
-            onChange={(e) => setInvRole(e.target.value)}
-          >
-            <option value="member">Medlem</option>
-            <option value="editor">Redaktør</option>
-            <option value="project_lead">Prosjektleder</option>
-            <option value="finance">Økonomi</option>
-            <option value="admin">Administrator</option>
-            <option value="guest">Gjest</option>
-          </select>
-          <button className="button button-primary" disabled={sending}>
-            {sending ? 'Sender …' : 'Opprett invitasjon'}
-          </button>
-        </form>
-      </section>
+      {canManageMembers && (
+        <section className="studio-card">
+          <h2>Inviter nytt medlem</h2>
+          <form className="studio-form" onSubmit={handleInvite}>
+            <label htmlFor="inv-email">E-post</label>
+            <input
+              id="inv-email"
+              type="email"
+              required
+              placeholder="navn@eksempel.no"
+              value={invEmail}
+              onChange={(e) => setInvEmail(e.target.value)}
+            />
+            <label htmlFor="inv-role">Rolle</label>
+            <select
+              id="inv-role"
+              value={invRole}
+              onChange={(e) => setInvRole(e.target.value)}
+            >
+              <option value="member">Medlem</option>
+              <option value="editor">Redaktør</option>
+              <option value="project_lead">Prosjektleder</option>
+              <option value="finance">Økonomi</option>
+              <option value="admin">Administrator</option>
+              <option value="guest">Gjest</option>
+            </select>
+            <button className="button button-primary" disabled={sending}>
+              {sending ? 'Oppretter …' : 'Opprett invitasjon'}
+            </button>
+          </form>
+          <p className="overview-meta">
+            Den inviterte oppretter konto med samme e-postadresse fra
+            Studio-innloggingen.
+          </p>
+        </section>
+      )}
 
       {notice && (
         <p className={`auth-message ${notice.tone}`} role="status">
@@ -150,7 +175,7 @@ export default function MembersPage() {
         </p>
       )}
 
-      {invitations.length > 0 && (
+      {canManageMembers && invitations.length > 0 && (
         <section className="studio-card">
           <h2>Ventende invitasjoner</h2>
           <ul className="studio-project-list">
@@ -196,6 +221,35 @@ export default function MembersPage() {
                     {statusLabels[m.status] ?? m.status}
                   </span>
                 </div>
+                {canManageMembers && m.role !== 'owner' && (
+                  <div className="studio-project-actions">
+                    <select
+                      aria-label={`Rolle for ${m.profile?.display_name ?? 'medlem'}`}
+                      value={m.role}
+                      onChange={(e) =>
+                        void updateMembership(m.id, { role: e.target.value })
+                      }
+                    >
+                      <option value="member">Medlem</option>
+                      <option value="editor">Redaktør</option>
+                      <option value="project_lead">Prosjektleder</option>
+                      <option value="finance">Økonomi</option>
+                      <option value="admin">Administrator</option>
+                      <option value="guest">Gjest</option>
+                    </select>
+                    <select
+                      aria-label={`Status for ${m.profile?.display_name ?? 'medlem'}`}
+                      value={m.status}
+                      onChange={(e) =>
+                        void updateMembership(m.id, { status: e.target.value })
+                      }
+                    >
+                      <option value="active">Aktiv</option>
+                      <option value="suspended">Suspendert</option>
+                      <option value="former">Tidligere</option>
+                    </select>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

@@ -2,7 +2,13 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 
 import { supabase } from '../../lib/supabase'
 import { createSlug, useSession } from '../../lib/hooks'
-import type { Notice, Profile, ProjectMember, StudioProject } from '../../lib/types'
+import type {
+  Notice,
+  Profile,
+  ProjectDocument,
+  ProjectMember,
+  StudioProject,
+} from '../../lib/types'
 
 export default function StudioProjectsPage() {
   const { userId } = useSession()
@@ -12,16 +18,23 @@ export default function StudioProjectsPage() {
 
   const [title, setTitle] = useState('')
   const [summary, setSummary] = useState('')
-  const [isPublic, setIsPublic] = useState(false)
+  const [visibility, setVisibility] = useState<'internal' | 'private' | 'public'>(
+    'internal',
+  )
   const [saving, setSaving] = useState(false)
 
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [uploadingFor, setUploadingFor] = useState<string | null>(null)
+  const [documentFile, setDocumentFile] = useState<File | null>(null)
+  const [uploadingDocumentFor, setUploadingDocumentFor] = useState<string | null>(null)
 
   const [allProfiles, setAllProfiles] = useState<Profile[]>([])
   const [projectMembers, setProjectMembers] = useState<Map<string, ProjectMember[]>>(
     new Map(),
   )
+  const [projectDocuments, setProjectDocuments] = useState<
+    Map<string, ProjectDocument[]>
+  >(new Map())
   const [addMemberProject, setAddMemberProject] = useState<string | null>(null)
   const [addMemberProfile, setAddMemberProfile] = useState('')
   const [addMemberRole, setAddMemberRole] = useState('member')
@@ -38,7 +51,13 @@ export default function StudioProjectsPage() {
         .order('created_at', { ascending: false }),
       client.from('sp_profiles').select('id, display_name, avatar_path, bio'),
       client.from('sp_project_members').select('id, project_id, profile_id, role'),
-    ]).then(([projRes, profRes, pmRes]) => {
+      client
+        .from('sp_project_documents')
+        .select(
+          'id, project_id, storage_path, file_name, mime_type, size_bytes, uploaded_by, created_at',
+        )
+        .order('created_at', { ascending: false }),
+    ]).then(([projRes, profRes, pmRes, documentRes]) => {
       setProjects((projRes.data as StudioProject[]) ?? [])
       setAllProfiles(profRes.data ?? [])
       const pmMap = new Map<string, ProjectMember[]>()
@@ -49,6 +68,13 @@ export default function StudioProjectsPage() {
         pmMap.set(pm.project_id, list)
       }
       setProjectMembers(pmMap)
+      const documentMap = new Map<string, ProjectDocument[]>()
+      for (const document of (documentRes.data ?? []) as ProjectDocument[]) {
+        const list = documentMap.get(document.project_id) ?? []
+        list.push(document)
+        documentMap.set(document.project_id, list)
+      }
+      setProjectDocuments(documentMap)
       setLoading(false)
     })
   }, [])
@@ -72,10 +98,10 @@ export default function StudioProjectsPage() {
       title: trimmed,
       slug,
       summary: summary.trim() || null,
-      visibility: isPublic ? 'public' : 'internal',
-      status: isPublic ? 'published' : 'draft',
-      is_public: isPublic,
-      published_at: isPublic ? new Date().toISOString() : null,
+      visibility,
+      status: visibility === 'public' ? 'published' : 'draft',
+      is_public: visibility === 'public',
+      published_at: visibility === 'public' ? new Date().toISOString() : null,
       owner_id: userId,
     })
     setSaving(false)
@@ -88,23 +114,27 @@ export default function StudioProjectsPage() {
     }
     setTitle('')
     setSummary('')
-    setIsPublic(false)
+    setVisibility('internal')
     setNotice({
       tone: 'success',
-      text: isPublic
-        ? 'Prosjektet er publisert på forsiden.'
-        : 'Internt prosjekt er opprettet.',
+      text:
+        visibility === 'public'
+          ? 'Prosjektet er publisert på forsiden.'
+          : 'Internt prosjekt er opprettet.',
     })
     void loadProjects()
   }
 
-  const togglePublish = async (project: StudioProject) => {
+  const updateVisibility = async (
+    project: StudioProject,
+    nextVisibility: 'internal' | 'private' | 'public',
+  ) => {
     if (!supabase) return
-    const willPublish = !project.is_public
+    const willPublish = nextVisibility === 'public'
     const { error } = await supabase
       .from('sp_projects')
       .update({
-        visibility: willPublish ? 'public' : 'internal',
+        visibility: nextVisibility,
         status: willPublish ? 'published' : 'draft',
         is_public: willPublish,
         published_at: willPublish ? new Date().toISOString() : null,
@@ -117,7 +147,11 @@ export default function StudioProjectsPage() {
     }
     setNotice({
       tone: 'success',
-      text: willPublish ? 'Prosjektet er publisert.' : 'Prosjektet er avpublisert.',
+      text: willPublish
+        ? 'Prosjektet er publisert.'
+        : nextVisibility === 'private'
+          ? 'Prosjektet er nå privat.'
+          : 'Prosjektet er nå internt.',
     })
     void loadProjects()
   }
@@ -176,6 +210,72 @@ export default function StudioProjectsPage() {
     void loadProjects()
   }
 
+  const handleDocumentUpload = async (projectId: string) => {
+    if (!supabase || !userId || !documentFile) return
+    if (documentFile.size > 20 * 1024 * 1024) {
+      setNotice({ tone: 'error', text: 'Dokumentet kan være maksimalt 20 MB.' })
+      return
+    }
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+      'text/csv',
+    ]
+    if (!allowedTypes.includes(documentFile.type)) {
+      setNotice({ tone: 'error', text: 'Dokumenttypen støttes ikke.' })
+      return
+    }
+    setUploadingDocumentFor(projectId)
+    const safeName = documentFile.name.replace(/[^a-zA-Z0-9._-]+/g, '-').slice(-160)
+    const storagePath = `${projectId}/${crypto.randomUUID()}-${safeName}`
+    const { error: uploadError } = await supabase.storage
+      .from('sp-project-documents')
+      .upload(storagePath, documentFile, {
+        contentType: documentFile.type,
+        upsert: false,
+      })
+    if (uploadError) {
+      setUploadingDocumentFor(null)
+      setNotice({ tone: 'error', text: 'Dokumentet kunne ikke lastes opp.' })
+      return
+    }
+    const { error: metadataError } = await supabase
+      .from('sp_project_documents')
+      .insert({
+        project_id: projectId,
+        storage_path: storagePath,
+        file_name: documentFile.name,
+        mime_type: documentFile.type,
+        size_bytes: documentFile.size,
+        uploaded_by: userId,
+      })
+    setUploadingDocumentFor(null)
+    setDocumentFile(null)
+    if (metadataError) {
+      await supabase.storage.from('sp-project-documents').remove([storagePath])
+      setNotice({ tone: 'error', text: 'Dokumentets metadata kunne ikke lagres.' })
+      return
+    }
+    setNotice({ tone: 'success', text: 'Dokumentet er lagt til i prosjektet.' })
+    void loadProjects()
+  }
+
+  const downloadDocument = async (document: ProjectDocument) => {
+    if (!supabase) return
+    const { data, error } = await supabase.storage
+      .from('sp-project-documents')
+      .createSignedUrl(document.storage_path, 60)
+    if (error || !data?.signedUrl) {
+      setNotice({ tone: 'error', text: 'Dokumentet kunne ikke åpnes.' })
+      return
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
+  }
+
   return (
     <div className="studio-page">
       <div className="studio-page-header">
@@ -202,15 +302,18 @@ export default function StudioProjectsPage() {
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
           />
-          <label className="check-label" htmlFor="project-public">
-            <input
-              checked={isPublic}
-              id="project-public"
-              type="checkbox"
-              onChange={(e) => setIsPublic(e.target.checked)}
-            />
-            Publiser på den åpne nettsiden nå
-          </label>
+          <label htmlFor="project-visibility">Synlighet</label>
+          <select
+            id="project-visibility"
+            value={visibility}
+            onChange={(e) =>
+              setVisibility(e.target.value as 'internal' | 'private' | 'public')
+            }
+          >
+            <option value="internal">Internt – alle aktive medlemmer</option>
+            <option value="private">Privat – kun prosjektets deltakere</option>
+            <option value="public">Offentlig – publiseres på nettsiden</option>
+          </select>
           <button className="button button-primary" disabled={saving}>
             {saving ? 'Oppretter …' : 'Opprett prosjekt'}
           </button>
@@ -246,12 +349,20 @@ export default function StudioProjectsPage() {
                   <span>
                     {project.is_public ? 'Offentlig' : 'Internt'} · {project.status}
                   </span>
-                  <button
-                    className="quiet-button"
-                    onClick={() => void togglePublish(project)}
+                  <select
+                    aria-label={`Synlighet for ${project.title}`}
+                    value={project.visibility}
+                    onChange={(e) =>
+                      void updateVisibility(
+                        project,
+                        e.target.value as 'internal' | 'private' | 'public',
+                      )
+                    }
                   >
-                    {project.is_public ? 'Avpubliser' : 'Publiser'}
-                  </button>
+                    <option value="internal">Internt</option>
+                    <option value="private">Privat</option>
+                    <option value="public">Offentlig</option>
+                  </select>
                   <button
                     className="quiet-button"
                     onClick={() =>
@@ -328,6 +439,40 @@ export default function StudioProjectsPage() {
                     </div>
                   </div>
                 )}
+                <div className="project-members-section">
+                  <strong>Dokumenter</strong>
+                  {(projectDocuments.get(project.id) ?? []).length === 0 ? (
+                    <p className="overview-meta">Ingen dokumenter ennå.</p>
+                  ) : (
+                    (projectDocuments.get(project.id) ?? []).map((document) => (
+                      <div key={document.id} className="project-member-row">
+                        <span>{document.file_name}</span>
+                        <button
+                          className="quiet-button"
+                          onClick={() => void downloadDocument(document)}
+                        >
+                          Åpne
+                        </button>
+                      </div>
+                    ))
+                  )}
+                  <div className="image-upload-row">
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+                      onChange={(e) => setDocumentFile(e.target.files?.[0] ?? null)}
+                    />
+                    <button
+                      className="quiet-button"
+                      disabled={!documentFile || uploadingDocumentFor === project.id}
+                      onClick={() => void handleDocumentUpload(project.id)}
+                    >
+                      {uploadingDocumentFor === project.id
+                        ? 'Laster opp …'
+                        : 'Last opp dokument'}
+                    </button>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>

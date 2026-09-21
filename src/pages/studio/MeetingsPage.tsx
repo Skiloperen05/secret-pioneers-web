@@ -2,13 +2,22 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/hooks'
-import type { Decision, Meeting, MeetingMinutes, Notice } from '../../lib/types'
+import type {
+  Decision,
+  Meeting,
+  MeetingMinutes,
+  Notice,
+  Profile,
+  StudioProject,
+} from '../../lib/types'
 
 export default function MeetingsPage() {
   const { userId } = useSession()
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [minutes, setMinutes] = useState<Map<string, MeetingMinutes>>(new Map())
   const [decisions, setDecisions] = useState<Decision[]>([])
+  const [projects, setProjects] = useState<StudioProject[]>([])
+  const [members, setMembers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [selectedMeeting, setSelectedMeeting] = useState<string | null>(null)
@@ -19,6 +28,7 @@ export default function MeetingsPage() {
   const [duration, setDuration] = useState('60')
   const [location, setLocation] = useState('')
   const [agenda, setAgenda] = useState('')
+  const [projectId, setProjectId] = useState('')
   const [saving, setSaving] = useState(false)
 
   const loadData = useCallback(() => {
@@ -41,12 +51,27 @@ export default function MeetingsPage() {
           'id, meeting_id, title, description, owner_id, deadline, status, created_at',
         )
         .order('created_at', { ascending: false }),
-    ]).then(([meetRes, minRes, decRes]) => {
+      client
+        .from('sp_projects')
+        .select(
+          'id, title, slug, summary, status, cover_image_path, visibility, is_public, published_at',
+        ),
+      client.from('sp_profiles').select('id, display_name, avatar_path, bio'),
+    ]).then(([meetRes, minRes, decRes, projectRes, memberRes]) => {
       setMeetings(meetRes.data ?? [])
       const minMap = new Map<string, MeetingMinutes>()
       for (const m of minRes.data ?? []) minMap.set(m.meeting_id, m)
       setMinutes(minMap)
-      setDecisions(decRes.data ?? [])
+      const loadedMembers = memberRes.data ?? []
+      const memberMap = new Map(loadedMembers.map((member) => [member.id, member]))
+      setMembers(loadedMembers)
+      setProjects((projectRes.data ?? []) as StudioProject[])
+      setDecisions(
+        (decRes.data ?? []).map((decision) => ({
+          ...decision,
+          owner: decision.owner_id ? memberMap.get(decision.owner_id) : undefined,
+        })),
+      )
       setLoading(false)
     })
   }, [])
@@ -69,6 +94,7 @@ export default function MeetingsPage() {
       duration_minutes: parseInt(duration) || 60,
       location: location.trim() || null,
       agenda: agenda.trim() || null,
+      project_id: projectId || null,
       created_by: userId,
     })
     setSaving(false)
@@ -82,6 +108,7 @@ export default function MeetingsPage() {
     setDuration('60')
     setLocation('')
     setAgenda('')
+    setProjectId('')
     setNotice({ tone: 'success', text: 'Møte opprettet.' })
     void loadData()
   }
@@ -105,13 +132,32 @@ export default function MeetingsPage() {
     void loadData()
   }
 
-  const addDecision = async (meetingId: string, decisionTitle: string) => {
-    if (!supabase || !decisionTitle.trim()) return
+  const addDecision = async (
+    meetingId: string,
+    input: { title: string; ownerId: string; deadline: string },
+  ) => {
+    if (!supabase || !input.title.trim()) return
     await supabase.from('sp_decisions').insert({
       meeting_id: meetingId,
-      title: decisionTitle.trim(),
+      title: input.title.trim(),
+      owner_id: input.ownerId || null,
+      deadline: input.deadline || null,
     })
     setNotice({ tone: 'success', text: 'Beslutning registrert.' })
+    void loadData()
+  }
+
+  const updateDecisionStatus = async (decisionId: string, status: string) => {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('sp_decisions')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', decisionId)
+    if (error) {
+      setNotice({ tone: 'error', text: 'Beslutningen kunne ikke oppdateres.' })
+      return
+    }
+    setNotice({ tone: 'success', text: 'Beslutningen er oppdatert.' })
     void loadData()
   }
 
@@ -196,6 +242,19 @@ export default function MeetingsPage() {
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Rom 302 / Zoom-lenke"
               />
+              <label htmlFor="meet-project">Prosjekt</label>
+              <select
+                id="meet-project"
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+              >
+                <option value="">Felles møte</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.title}
+                  </option>
+                ))}
+              </select>
               <label htmlFor="meet-agenda">Agenda</label>
               <textarea
                 id="meet-agenda"
@@ -253,8 +312,12 @@ export default function MeetingsPage() {
           meeting={selected}
           minutes={minutes.get(selected.id) ?? null}
           decisions={decisions.filter((d) => d.meeting_id === selected.id)}
+          members={members}
           onSaveMinutes={(body) => void saveMinutes(selected.id, body)}
-          onAddDecision={(t) => void addDecision(selected.id, t)}
+          onAddDecision={(input) => void addDecision(selected.id, input)}
+          onUpdateDecisionStatus={(decisionId, status) =>
+            void updateDecisionStatus(decisionId, status)
+          }
           onBack={() => setSelectedMeeting(null)}
           notice={notice}
         />
@@ -267,21 +330,27 @@ function MeetingDetail({
   meeting,
   minutes,
   decisions,
+  members,
   onSaveMinutes,
   onAddDecision,
+  onUpdateDecisionStatus,
   onBack,
   notice,
 }: {
   meeting: Meeting
   minutes: MeetingMinutes | null
   decisions: Decision[]
+  members: Profile[]
   onSaveMinutes: (body: string) => void
-  onAddDecision: (title: string) => void
+  onAddDecision: (input: { title: string; ownerId: string; deadline: string }) => void
+  onUpdateDecisionStatus: (decisionId: string, status: string) => void
   onBack: () => void
   notice: Notice | null
 }) {
   const [body, setBody] = useState(minutes?.body ?? '')
   const [newDecision, setNewDecision] = useState('')
+  const [decisionOwner, setDecisionOwner] = useState('')
+  const [decisionDeadline, setDecisionDeadline] = useState('')
 
   return (
     <>
@@ -336,10 +405,25 @@ function MeetingDetail({
                   {d.deadline && (
                     <span className="overview-meta">Frist: {d.deadline}</span>
                   )}
+                  {d.owner && (
+                    <span className="overview-meta">
+                      Ansvar: {d.owner.display_name}
+                    </span>
+                  )}
                 </div>
-                <span className={`status-badge status-${d.status}`}>
-                  {d.status === 'open' ? 'Åpen' : 'Fullført'}
-                </span>
+                <div className="studio-project-actions">
+                  <span className={`status-badge status-${d.status}`}>
+                    {d.status === 'open' ? 'Åpen' : 'Fullført'}
+                  </span>
+                  {d.status === 'open' && (
+                    <button
+                      className="quiet-button"
+                      onClick={() => onUpdateDecisionStatus(d.id, 'completed')}
+                    >
+                      Fullfør
+                    </button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
@@ -352,11 +436,37 @@ function MeetingDetail({
             onChange={(e) => setNewDecision(e.target.value)}
             placeholder="Hva ble vedtatt?"
           />
+          <label htmlFor="decision-owner">Ansvarlig</label>
+          <select
+            id="decision-owner"
+            value={decisionOwner}
+            onChange={(e) => setDecisionOwner(e.target.value)}
+          >
+            <option value="">Ikke tildelt</option>
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.display_name}
+              </option>
+            ))}
+          </select>
+          <label htmlFor="decision-deadline">Frist</label>
+          <input
+            id="decision-deadline"
+            type="date"
+            value={decisionDeadline}
+            onChange={(e) => setDecisionDeadline(e.target.value)}
+          />
           <button
             className="button button-primary"
             onClick={() => {
-              onAddDecision(newDecision)
+              onAddDecision({
+                title: newDecision,
+                ownerId: decisionOwner,
+                deadline: decisionDeadline,
+              })
               setNewDecision('')
+              setDecisionOwner('')
+              setDecisionDeadline('')
             }}
             disabled={!newDecision.trim()}
           >

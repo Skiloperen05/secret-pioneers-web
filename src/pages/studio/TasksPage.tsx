@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/hooks'
-import type { Notice, Profile, Task } from '../../lib/types'
+import type { Notice, Profile, StudioProject, Task } from '../../lib/types'
 
 export default function TasksPage() {
   const { userId } = useSession()
   const [tasks, setTasks] = useState<Task[]>([])
   const [members, setMembers] = useState<Profile[]>([])
+  const [projects, setProjects] = useState<StudioProject[]>([])
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [filter, setFilter] = useState<'all' | 'mine'>('mine')
@@ -15,6 +16,7 @@ export default function TasksPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [assigneeId, setAssigneeId] = useState('')
+  const [projectId, setProjectId] = useState('')
   const [priority, setPriority] = useState('medium')
   const [dueDate, setDueDate] = useState('')
   const [saving, setSaving] = useState(false)
@@ -31,14 +33,25 @@ export default function TasksPage() {
         .in('status', ['todo', 'in_progress'])
         .order('created_at', { ascending: false }),
       client.from('sp_profiles').select('id, display_name, avatar_path, bio'),
-    ]).then(([taskRes, memberRes]) => {
+      client
+        .from('sp_projects')
+        .select(
+          'id, title, slug, summary, status, cover_image_path, visibility, is_public, published_at',
+        ),
+    ]).then(([taskRes, memberRes, projectRes]) => {
       const profiles = memberRes.data ?? []
       setMembers(profiles)
+      const availableProjects = (projectRes.data ?? []) as StudioProject[]
+      setProjects(availableProjects)
       const profileMap = new Map(profiles.map((p) => [p.id, p]))
+      const projectMap = new Map(availableProjects.map((p) => [p.id, p]))
       setTasks(
         (taskRes.data ?? []).map((t) => ({
           ...t,
           assignee: t.assignee_id ? profileMap.get(t.assignee_id) : undefined,
+          project: t.project_id
+            ? { title: projectMap.get(t.project_id)?.title ?? 'Prosjekt' }
+            : undefined,
         })),
       )
       setLoading(false)
@@ -60,6 +73,7 @@ export default function TasksPage() {
       title: trimmed,
       description: description.trim() || null,
       assignee_id: assigneeId || null,
+      project_id: projectId || null,
       created_by: userId,
       priority,
       due_date: dueDate || null,
@@ -72,6 +86,7 @@ export default function TasksPage() {
     setTitle('')
     setDescription('')
     setAssigneeId('')
+    setProjectId('')
     setPriority('medium')
     setDueDate('')
     setNotice({ tone: 'success', text: 'Oppgave opprettet.' })
@@ -142,6 +157,19 @@ export default function TasksPage() {
               </option>
             ))}
           </select>
+          <label htmlFor="task-project">Prosjekt</label>
+          <select
+            id="task-project"
+            value={projectId}
+            onChange={(e) => setProjectId(e.target.value)}
+          >
+            <option value="">Felles oppgave</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.title}
+              </option>
+            ))}
+          </select>
           <div className="form-row">
             <div>
               <label htmlFor="task-priority">Prioritet</label>
@@ -206,6 +234,7 @@ export default function TasksPage() {
                   <strong>{task.title}</strong>
                   <span className="overview-meta">
                     {priorityLabel[task.priority]}
+                    {task.project && ` · ${task.project.title}`}
                     {task.assignee && ` · ${task.assignee.display_name}`}
                     {task.due_date && ` · Frist ${formatDate(task.due_date)}`}
                   </span>

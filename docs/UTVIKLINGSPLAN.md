@@ -1,6 +1,8 @@
 # Utviklingsplan: Secret Pioneers
 
-**Status:** Fase 0 gjennomført 21. september 2026. Fase 1 er i gang.
+**Status:** Fase 0 og fase 1 er implementert. Fase 2 er implementert i
+arbeidsgrenen `codex/phase-2-completion` og venter på migrering til Supabase
+og tilgangstesting før produksjonssetting.
 
 **Mål:** Et profesjonelt digitalt hjem for Secret Pioneers med en åpen,
 offentlig profil og et sikkert, medlemsstyrt arbeidsrom. Innhold som publiseres
@@ -314,6 +316,27 @@ Database Advisors.
 Rekkefølgen er bevisst: en sikker kjerne og et brukbart publiseringssystem
 kommer før et omfattende samarbeidsverktøy.
 
+### Gjennomføringsplan for fase 2
+
+1. Avgrense private prosjekter, oppgaver, møter, referater og filer med
+   prosjektmedlemskap i RLS.
+2. Fullføre prosjektarbeidsrommet med synlighet, deltakere, dokumenter,
+   prosjektknyttede oppgaver og frister.
+3. Fullføre medlems- og møteflyten med invitasjonsregistrering, roller,
+   agenda, referat, beslutninger og oppfølging.
+4. Gi brukeren oversikt over egne oppgaver, kommende møter og varsler.
+5. Verifisere med bygg, enhetstester og RLS-tester før utrulling.
+
+**Registrert 21. september 2026:** Punkt 1–4 er implementert i kode og
+versjonert SQL. Fase 2-migrasjonen `20260921150000_phase_two_access_and_documents.sql`
+legger til prosjektavgrenset tilgang, private dokumenter, innmeldings-trigger
+for inviterte brukere og oppgavevarsler. Frontend knytter nå oppgaver og møter
+til prosjekter, har dokumentområde, ansvar/frister på beslutninger og
+administrasjon av medlemsroller. Punkt 5 gjenstår delvis: klientbygg og
+enhetstester består, mens RLS-testene må kjøres mot en Supabase-instans etter
+migrering. E-postvarsler krever fortsatt at avsender/SMTP eller en
+e-postleverandør konfigureres; in-app-varsler for tildelte oppgaver er på plass.
+
 ### Fase 0 – Avklaringer og etablering
 
 **Leveranse:** Fundament klart for produktutvikling.
@@ -373,6 +396,13 @@ men aldri utkast eller internt innhold.
 **Ferdig når:** Et privat prosjekt kan gjennomføres fra opprettelse via oppgave
 og referat til arkivering, uten at data blir synlig i offentlig UI eller for
 uautoriserte medlemmer.
+
+**Implementert i arbeidsgren:** Private prosjekter er avgrenset til eier,
+prosjektdeltakere og owner/admin i databasen. Oppgaver, møter, referater,
+beslutninger og dokumenter arver prosjektets tilgang. Dokumenter ligger i den
+private `sp-project-documents`-bøtten og åpnes med kortlivede signed URLs.
+Prosjektansvarlige kan legge til deltakere, opprette prosjektknyttede oppgaver
+og møter, og følge opp beslutninger med ansvarlig og frist.
 
 ### Fase 3 – Økonomi, meldinger og digitale møter
 
